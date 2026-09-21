@@ -1,0 +1,73 @@
+@import url('https://miaoda.feishu.cn/fonts/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+@import "./fonts.css";
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./tailwind-theme.css";
+@import "./typography.css";
+
+:root {
+  /* 英文走 Gilroy，中文字符 Gilroy 不含、自动回退鸿蒙 Sans SC */
+  --font-sans: 'Gilroy', 'HarmonyOS Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  background: #0a0a0a;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* REC 红点闪烁 */
+@keyframes rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.rec-dot { animation: rec-blink 1.6s ease-in-out infinite; }
+
+/* 自定义取景框光标（桌面） */
+.custom-cursor, .custom-cursor * { cursor: none !important; }
+
+/* 常态：白色小方块 + 黑边，即时跟手 */
+.cf-dot-box {
+  position: fixed; left: 0; top: 0; z-index: 200;
+  width: 10px; height: 10px;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
+  pointer-events: none;
+  transition: opacity .18s ease, background .18s ease, box-shadow .18s ease;
+}
+/* 普通可交互元素：方块变绿 */
+.cf-dot-box[data-mode="green"] {
+  background: #B2F2BB;
+  border-color: #0a0a0a;
+  box-shadow: 0 0 10px rgba(178,242,187,0.7);
+}
+/* 分裂态：方块隐藏 */
+.cf-dot-box[data-mode="split"] { opacity: 0; }
+
+/* 分裂角标：仅 split 态显示，荧光绿 */
+.cf-corner {
+  position: fixed; left: 0; top: 0; z-index: 200;
+  width: 16px; height: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.cf-corner[data-mode="split"] { opacity: 1; }
+.cf-c0 { border-top: 2px solid #B2F2BB; border-left: 2px solid #B2F2BB; }
+.cf-c1 { border-top: 2px solid #B2F2BB; border-right: 2px solid #B2F2BB; }
+.cf-c2 { border-bottom: 2px solid #B2F2BB; border-left: 2px solid #B2F2BB; }
+.cf-c3 { border-bottom: 2px solid #B2F2BB; border-right: 2px solid #B2F2BB; }
+
+@media (pointer: coarse) {
+  .cf-dot-box, .cf-corner { display: none !important; }
+}
