@@ -100,7 +100,15 @@ function collectRoutePaths(srcDir: string): string[] {
 }
 
 export default defineConfig(({ command }) => ({
-  plugins: [react(), tailwindcss(), miaodaOutputPlugin(), sparkJsonPlugin()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Cloudflare Pages / Wrangler 部署时禁用妙搭产物整理插件：
+    // 该插件会在 closeBundle 删除 dist/client 并拆成 output/output_resource，
+    // 而 Wrangler 需要从 dist/client/wrangler.json 读取部署配置，删除后会报找不到文件。
+    ...(process.env.CF_PAGES || process.env.WRANGLER ? [] : [miaodaOutputPlugin()]),
+    sparkJsonPlugin(),
+  ],
   // 生产构建：JS/CSS 引用带 CDN 前缀（无 CDN 时退回 base path）；dev 恒为 /
   base: command === 'build' ? cdnPrefix || basePath : '/',
   define: {
