@@ -99,16 +99,27 @@ function collectRoutePaths(srcDir: string): string[] {
   return [...paths];
 }
 
-export default defineConfig(({ command }) => ({
-  plugins: [
-    react(),
-    tailwindcss(),
-    // Cloudflare Pages / Wrangler 部署时禁用妙搭产物整理插件：
-    // 该插件会在 closeBundle 删除 dist/client 并拆成 output/output_resource，
-    // 而 Wrangler 需要从 dist/client/wrangler.json 读取部署配置，删除后会报找不到文件。
-    ...(process.env.CF_PAGES || process.env.WRANGLER ? [] : [miaodaOutputPlugin()]),
-    sparkJsonPlugin(),
-  ],
+export default defineConfig(({ command }) => {
+  // Cloudflare 部署环境判定：
+  // 1. CF_PAGES —— Cloudflare Pages 构建环境自动注入
+  // 2. WRANGLER —— Wrangler CLI 运行时注入
+  // 3. wrangler.jsonc 存在 —— Wrangler 自动配置时在项目根创建，Workers Git 部署时一定存在
+  const wranglerConfigExists = fs.existsSync(
+    path.resolve(import.meta.dirname, 'wrangler.jsonc'),
+  );
+  const isCloudflareDeploy =
+    !!process.env.CF_PAGES || !!process.env.WRANGLER || wranglerConfigExists;
+
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+      // Cloudflare 部署时禁用妙搭产物整理插件：
+      // 该插件会在 closeBundle 删除 dist/client 并拆成 output/output_resource，
+      // 而 Wrangler 需要从 dist/client/wrangler.json 读取部署配置，删除后会报找不到文件。
+      ...(isCloudflareDeploy ? [] : [miaodaOutputPlugin()]),
+      sparkJsonPlugin(),
+    ],
   // 生产构建：JS/CSS 引用带 CDN 前缀（无 CDN 时退回 base path）；dev 恒为 /
   base: command === 'build' ? cdnPrefix || basePath : '/',
   define: {
@@ -123,4 +134,5 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: 'dist/client',
   },
-}));
+  };
+});
