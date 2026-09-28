@@ -62,7 +62,7 @@ export default function AboutContent() {
             </div>
             <div className="flex justify-between border-b border-[#222] pb-3 max-w-lg">
               <span className="text-[#777]">作品集 / Portfolio</span>
-              <a href="/portfolio.pdf" download className="hover:text-[#B2F2BB] transition-colors">下载 PDF ↓</a>
+              <a href="https://github.com/Brecloud/brecloud.design/releases/latest/download/portfolio.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-[#B2F2BB] transition-colors">下载 PDF ↓</a>
             </div>
           </div>
         </section>
