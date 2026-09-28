@@ -56,6 +56,14 @@ export default function AboutContent() {
               <span className="text-[#777]">RedBook 小红书</span>
               <a href="https://xhslink.cn/o/At6W9qqeDHc" target="_blank" rel="noopener noreferrer" className="hover:text-[#B2F2BB] transition-colors">@brecloud3806</a>
             </div>
+            <div className="flex justify-between border-b border-[#222] pb-3 max-w-lg">
+              <span className="text-[#777]">简历 / Resume</span>
+              <a href="/resume.pdf" download className="hover:text-[#B2F2BB] transition-colors">下载 PDF ↓</a>
+            </div>
+            <div className="flex justify-between border-b border-[#222] pb-3 max-w-lg">
+              <span className="text-[#777]">作品集 / Portfolio</span>
+              <a href="/portfolio.pdf" download className="hover:text-[#B2F2BB] transition-colors">下载 PDF ↓</a>
+            </div>
           </div>
         </section>
       </div>
