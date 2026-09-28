@@ -98,6 +98,53 @@ export default function HomePage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [section, current, projPages, zoom, closeZoom]);
 
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (zoom) { closeZoom(); return; }
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+
+      // About 页内部滚动时，纵向滑动不触发 section 切换
+      if (current.type === 'about') {
+        const el = aboutScrollRef.current;
+        if (el) {
+          const atTop = el.scrollTop <= 0;
+          const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+          if (dy < -50 && !atBottom) return;
+          if (dy > 50 && !atTop) return;
+        }
+        if (dy < -50) setSection((s) => Math.max(s - 1, 0));
+        return;
+      }
+
+      if (current.type === 'project' && current.projectId) {
+        const proj = PROJECTS.find((p) => p.id === current.projectId)!;
+        const pg = projPages[current.projectId] ?? 0;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx < -50 && pg < proj.pages.length - 1) setPage(current.projectId, pg + 1);
+          if (dx > 50 && pg > 0) setPage(current.projectId, pg - 1);
+          return;
+        }
+      }
+
+      if (dy < -50) setSection((s) => Math.min(s + 1, SECTIONS.length - 1));
+      if (dy > 50) setSection((s) => Math.max(s - 1, 0));
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [section, current, projPages, zoom, closeZoom]);
+
   const goSection = useCallback((i: number) => setSection(i), []);
   const handleDiceFace = useCallback((face: number) => goSection(face + 1), [goSection]);
 
@@ -121,15 +168,15 @@ export default function HomePage() {
   const box = zoom ? (zoomPhase === 'to' ? target : zoom.origin) : target;
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#0a0a0a] text-[#e8e8e8]">
+    <div className="relative h-screen w-full overflow-hidden bg-[#0a0a0a] text-[#e8e8e8]" style={{ touchAction: 'none' }}>
       <CursorFrame />
 
-      {/* 左侧竖向指示器 */}
-      <nav className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
+      {/* 指示器：移动端顶部横向，PC端左侧竖排 */}
+      <nav className="fixed z-50 flex flex-row md:flex-col gap-2 md:gap-3 left-1/2 md:left-6 top-4 md:top-1/2 -translate-x-1/2 md:translate-x-0 md:-translate-y-1/2">
         {SECTIONS.map((s, i) => (
           <button key={s.id} onClick={() => goSection(i)} className="group flex items-center gap-2" aria-label={s.label}>
             <span className="block transition-all duration-500" style={{ width: i === section ? 24 : 8, height: 2, background: i === section ? accentColor : '#333' }} />
-            <span className="opacity-0 group-hover:opacity-60 transition-opacity text-[10px] font-mono tracking-widest text-white">{s.en}</span>
+            <span className="hidden md:opacity-0 group-hover:opacity-60 transition-opacity text-[10px] font-mono tracking-widest text-white">{s.en}</span>
           </button>
         ))}
       </nav>
@@ -143,7 +190,7 @@ export default function HomePage() {
             )}
             {s.type === 'other' && <OtherView onZoom={openZoom} />}
             {s.type === 'about' && (
-              <div ref={aboutScrollRef} className="h-full overflow-y-auto">
+              <div ref={aboutScrollRef} className="h-full overflow-y-auto" style={{ touchAction: 'pan-y' }}>
                 <AboutContent />
               </div>
             )}
@@ -222,17 +269,17 @@ function BeijingClock() {
 
 function ProjectView({ project, page }: { project: typeof PROJECTS[0]; page: number }) {
   return (
-    <div className="h-full w-full flex items-center gap-8 md:gap-16 px-20 md:px-28 relative z-10">
-      <div className="w-64 md:w-72 shrink-0 z-10">
+    <div className="h-full w-full flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-16 px-6 md:px-28 pt-14 md:pt-0 relative z-10">
+      <div className="w-full md:w-72 shrink-0 z-10">
         <div className="text-[11px] font-mono tracking-widest" style={{ color: project.color }}>
           PROJ.{String(PROJECTS.indexOf(project) + 1).padStart(2, '0')}
         </div>
-        <h2 className="mt-3 text-3xl md:text-4xl font-bold">{project.name}</h2>
-        <p className="mt-1 text-sm text-[#777]">{project.title}</p>
-        <p className="mt-4 text-xs text-[#999] leading-relaxed">{project.description}</p>
-        <p className="mt-4 text-[10px] font-mono text-[#555]">{project.role}</p>
+        <h2 className="mt-2 md:mt-3 text-2xl md:text-4xl font-bold">{project.name}</h2>
+        <p className="mt-1 text-xs md:text-sm text-[#777]">{project.title}</p>
+        <p className="mt-2 md:mt-4 text-xs text-[#999] leading-relaxed">{project.description}</p>
+        <p className="mt-2 md:mt-4 text-[10px] font-mono text-[#555]">{project.role}</p>
       </div>
-      <div className="flex-1 relative h-[70vh]">
+      <div className="flex-1 w-full relative md:h-[70vh]">
         <div className="h-full overflow-hidden">
           <div className="flex h-full transition-transform duration-700 ease-[cubic-bezier(0.6,0.05,0.01,0.9)]"
             style={{ transform: `translateX(-${page * 100}%)` }}>
@@ -252,14 +299,14 @@ function ProjectView({ project, page }: { project: typeof PROJECTS[0]; page: num
 function OtherView({ onZoom }: { onZoom: (src: string, rect: IRect) => void }) {
   const pages = [...OTHER_PAGES, AI_PAGE];
   return (
-    <div className="h-full w-full flex items-center gap-8 md:gap-16 px-20 md:px-28 relative z-10">
-      <div className="w-64 md:w-72 shrink-0 z-10">
+    <div className="h-full w-full flex flex-col md:flex-row items-center md:gap-16 px-6 md:px-28 pt-14 md:pt-0 relative z-10">
+      <div className="w-full md:w-72 shrink-0 z-10 mb-3 md:mb-0">
         <div className="text-[11px] font-mono tracking-widest text-[#B2F2BB]">OTHER</div>
-        <h2 className="mt-3 text-3xl md:text-4xl font-bold">更多作品</h2>
-        <p className="mt-4 text-xs text-[#999] leading-relaxed">工业设计 · 文创 · 导视 · 平面 · AI Practice</p>
-        <p className="mt-4 text-[10px] font-mono text-[#555]">CLICK TO ZOOM</p>
+        <h2 className="mt-2 md:mt-3 text-2xl md:text-4xl font-bold">更多作品</h2>
+        <p className="mt-2 md:mt-4 text-xs text-[#999] leading-relaxed">工业设计 · 文创 · 导视 · 平面 · AI Practice</p>
+        <p className="mt-2 md:mt-4 text-[10px] font-mono text-[#555]">TAP TO ZOOM</p>
       </div>
-      <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="flex-1 w-full grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 content-center">
         {pages.map((p, i) => (
           <button
             key={i}
